@@ -28,19 +28,34 @@ def about():
 @login_required
 def upload():
     # Instantiate your form class
-    form = UploadForm()
+    file = UploadForm()
     if request.method=='POST':
     # Validate file upload on submit
-        if form.validate_on_submit():
+        if file.validate_on_submit():
             # Get file data and save to your uploads folder
-            photograph=form.photograph.data
+            photograph=file.photograph.data
             filename= secure_filename(photograph.filename)
             photograph.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
             flash('File Saved', 'success')
             return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
 
-    return render_template('upload.html',form=form)
+    return render_template('upload.html',form=file)
+
+
+def get_uploaded_images():
+    rootdir = os.getcwd()
+    photos= []
+    for subdir, dirs, files in os.walk(rootdir + '/uploads'):
+        for file in files:
+            photos.append(os.path.join(file)) 
+    return photos
+
+@app.route('/uploads/<filename>')
+def get_image(filename):
+    root_dir = os.getcwd()
+    return send_from_directory(os.path.join(root_dir, app.config['UPLOAD_FOLDER']), filename)
+
 
 
 @app.route('/login', methods=['POST', 'GET'])
