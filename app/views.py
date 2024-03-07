@@ -1,11 +1,12 @@
 import os
 from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
 from app.models import UserProfile
-from app.forms import LoginForm
+from app.forms import LoginForm , UploadForm
+
 
 
 ###
@@ -23,19 +24,23 @@ def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
 
-
 @app.route('/upload', methods=['POST', 'GET'])
+@login_required
 def upload():
     # Instantiate your form class
-    
+    form = UploadForm()
+    if request.method=='POST':
     # Validate file upload on submit
-    if form.validate_on_submit():
-        # Get file data and save to your uploads folder
+        if form.validate_on_submit():
+            # Get file data and save to your uploads folder
+            photograph=form.photograph.data
+            filename= secure_filename(photograph.filename)
+            photograph.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-        flash('File Saved', 'success')
-        return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
+            flash('File Saved', 'success')
+            return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
 
-    return render_template('upload.html')
+    return render_template('upload.html',form=form)
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -53,8 +58,9 @@ def login():
         # passed to the login_user() method below.
         username= form.username.data
         password=form.password.data
-        user= UserProfile.query.filter_by(username= username).all
-        if user in not None and check_password_hash(user.password,password):        # Gets user id, load into session
+        user= UserProfile.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password,password):       
+            # Gets user id, load into session
             login_user(user)
             flash('Login Successful','success')
             return redirect(url_for('upload'))
