@@ -46,17 +46,28 @@ def upload():
 def get_uploaded_images():
     rootdir = os.getcwd()
     photos= []
-    for subdir, dirs, files in os.walk(rootdir + '/uploads'):
+    for subdir, dirs, files in os.walk(rootdir + 'uploads'):
         for file in files:
             photos.append(os.path.join(file)) 
-    return photos
+        return photos
 
 @app.route('/uploads/<filename>')
 def get_image(filename):
     root_dir = os.getcwd()
     return send_from_directory(os.path.join(root_dir, app.config['UPLOAD_FOLDER']), filename)
 
+@app.route("/files")
+@login_required
+def files():
+    return render_template("files.html", files=get_uploaded_images())
 
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    flash('Loggout successful', 'success')
+    return redirect(url_for('home'))
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
