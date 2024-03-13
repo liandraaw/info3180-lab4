@@ -33,7 +33,7 @@ def upload():
     # Validate file upload on submit
         if file.validate_on_submit():
             # Get file data and save to your uploads folder
-            photograph=file.photograph.data
+            photograph=file.photo.data
             filename= secure_filename(photograph.filename)
             photograph.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
@@ -43,23 +43,20 @@ def upload():
     return render_template('upload.html',form=file)
 
 
-def get_uploaded_images():
-    rootdir = os.getcwd()
-    photos= []
-    for subdir, dirs, files in os.walk(rootdir + 'uploads'):
-        for file in files:
-            photos.append(os.path.join(file)) 
-        return photos
+def get_uploaded_image():
+    uploads_dir = os.path.join(app.config['UPLOAD_FOLDER'])
+    uploaded_images = [f for f in os.listdir(uploads_dir) if os.path.isfile(os.path.join(uploads_dir, f))]
+    return uploaded_images
 
 @app.route('/uploads/<filename>')
 def get_image(filename):
-    root_dir = os.getcwd()
-    return send_from_directory(os.path.join(root_dir, app.config['UPLOAD_FOLDER']), filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route("/files")
 @login_required
 def files():
-    return render_template("files.html", files=get_uploaded_images())
+    photos= get_uploaded_image()
+    return render_template('files.html', photos=photos)
 
 
 
